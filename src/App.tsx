@@ -19,7 +19,6 @@ type Board = 'batting' | 'bowling' | 'fielding' | 'mvp';
 type RecordMetric = 'runs' | 'average' | 'strikeRate' | 'wickets' | 'economy' | 'fielding' | 'mvp';
 type IconName = 'home' | 'trophy' | 'users' | 'calendar' | 'search' | 'arrow' | 'chevron' | 'close' | 'star' | 'cricket' | 'menu';
 const clubLogo = '/slingers-logo.jpg';
-const matchesPlayed = 25;
 
 const iconPaths: Record<IconName, string> = {
   home: 'M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5z M9 21v-7h6v7',
@@ -49,16 +48,6 @@ function Avatar({ name, image, size = 'normal' }: { name: string; image?: string
       {initials(name)}
       {image && <img className="avatar-photo" src={image} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
     </span>
-  );
-}
-
-function StatCard({ label, value, note, icon }: { label: string; value: string; note: string; icon: IconName }) {
-  return (
-    <article className="stat-card">
-      <div className="stat-card-top"><span className="stat-icon"><Icon name={icon} size={17} /></span><span className="stat-note">{note}</span></div>
-      <p className="stat-label">{label}</p>
-      <p className="stat-value">{value}</p>
-    </article>
   );
 }
 
@@ -240,43 +229,52 @@ function PlayerProfile({ player, onClose }: { player: PlayerStats; onClose: () =
       <section className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-name">
         <button className="modal-close" aria-label="Close profile" onClick={onClose}><Icon name="close" /></button>
         <div className="profile-cover"><img className="cover-logo" src={clubLogo} alt="" /><span className="cover-label">SLINGERS CC · PLAYER PROFILE</span></div>
-        <div className="profile-heading"><Avatar name={player.name} image={player.image} size="large" /><div><span className="eyebrow">{role}</span><h2 id="profile-name">{player.name}</h2><p>{player.appearances} appearances in the scorecard archive</p></div></div>
-        <div className="profile-highlights">
-          <div><small>RUNS</small><strong>{player.runs}</strong></div>
-          <div><small>WICKETS</small><strong>{player.wickets}</strong></div>
-          <div><small>BEST SCORE</small><strong>{player.highestScore}</strong></div>
-          <div><small>MVP POINTS</small><strong>{player.mvpPoints.toFixed(2)}</strong></div>
-        </div>
-        <div className="profile-section">
-          <h3>Batting</h3>
-          <div className="profile-stat-grid">
-            <ProfileStat label="Average" value={battingAverage(player).toFixed(2)} />
-            <ProfileStat label="Strike rate" value={strikeRate(player).toFixed(2)} />
-            <ProfileStat label="Fours / sixes" value={`${player.fours} / ${player.sixes}`} />
-            <ProfileStat label="50s / 100s" value={`${player.fifties} / ${player.centuries}`} />
+        <div className="profile-layout">
+          <aside className="profile-aside">
+            {player.image
+              ? <img className="profile-photo" src={player.image} alt={`${player.name} profile`} />
+              : <div className="profile-photo-fallback" aria-hidden="true">{initials(player.name)}</div>}
+            <div className="profile-heading"><span className="eyebrow">{role}</span><h2 id="profile-name">{player.name}</h2><p>{player.appearances} appearances in the scorecard archive</p></div>
+          </aside>
+          <div className="profile-stats">
+            <div className="profile-highlights">
+              <div><small>RUNS</small><strong>{player.runs}</strong></div>
+              <div><small>WICKETS</small><strong>{player.wickets}</strong></div>
+              <div><small>BEST SCORE</small><strong>{player.highestScore}</strong></div>
+              <div><small>MVP POINTS</small><strong>{player.mvpPoints.toFixed(2)}</strong></div>
+            </div>
+            <div className="profile-section">
+              <h3>Batting</h3>
+              <div className="profile-stat-grid">
+                <ProfileStat label="Average" value={battingAverage(player).toFixed(2)} />
+                <ProfileStat label="Strike rate" value={strikeRate(player).toFixed(2)} />
+                <ProfileStat label="Fours / sixes" value={`${player.fours} / ${player.sixes}`} />
+                <ProfileStat label="50s / 100s" value={`${player.fifties} / ${player.centuries}`} />
+              </div>
+            </div>
+            <div className="profile-section">
+              <h3>Bowling</h3>
+              <div className="profile-stat-grid">
+                <ProfileStat label="Economy" value={bowlingEconomy(player).toFixed(2)} />
+                <ProfileStat label="Average" value={player.wickets ? bowlingAverage(player).toFixed(2) : '—'} />
+                <ProfileStat label="Overs" value={formatOvers(player.ballsBowled)} />
+                <ProfileStat label="Maidens" value={String(player.maidens)} />
+              </div>
+            </div>
+            <div className="profile-section">
+              <h3>Fielding</h3>
+              <div className="profile-stat-grid">
+                <ProfileStat label="Catches" value={String(player.catches)} />
+                <ProfileStat label="Stumpings" value={String(player.stumpings)} />
+                <ProfileStat label="Run outs" value={String(player.runOuts)} />
+                <ProfileStat label="Assisted run outs" value={String(player.assistedRunOuts)} />
+                <ProfileStat label="Caught & bowled" value={String(player.caughtAndBowled)} />
+                <ProfileStat label="Caught behind" value={String(player.caughtBehind)} />
+              </div>
+            </div>
+            <p className="profile-note">Fielding figures reflect the player totals supplied with the dataset.</p>
           </div>
         </div>
-        <div className="profile-section">
-          <h3>Bowling</h3>
-          <div className="profile-stat-grid">
-            <ProfileStat label="Economy" value={bowlingEconomy(player).toFixed(2)} />
-            <ProfileStat label="Average" value={player.wickets ? bowlingAverage(player).toFixed(2) : '—'} />
-            <ProfileStat label="Overs" value={formatOvers(player.ballsBowled)} />
-            <ProfileStat label="Maidens" value={String(player.maidens)} />
-          </div>
-        </div>
-        <div className="profile-section">
-          <h3>Fielding</h3>
-          <div className="profile-stat-grid">
-            <ProfileStat label="Catches" value={String(player.catches)} />
-            <ProfileStat label="Stumpings" value={String(player.stumpings)} />
-            <ProfileStat label="Run outs" value={String(player.runOuts)} />
-            <ProfileStat label="Assisted run outs" value={String(player.assistedRunOuts)} />
-            <ProfileStat label="Caught & bowled" value={String(player.caughtAndBowled)} />
-            <ProfileStat label="Caught behind" value={String(player.caughtBehind)} />
-          </div>
-        </div>
-        <p className="profile-note">Fielding figures reflect the player totals supplied with the dataset.</p>
       </section>
     </div>
   );
@@ -291,29 +289,29 @@ function Overview({ openPlayer, setPage, setBoard }: { openPlayer: (player: Play
   const topWicketTaker = [...players].sort((a, b) => b.wickets - a.wickets)[0];
   const mvpLeader = [...players].sort((a, b) => b.mvpPoints - a.mvpPoints)[0];
   const mvpWinners = players.filter((player) => player.mvpAwards).length;
+  const totalRuns = players.reduce((total, player) => total + player.runs, 0);
+  const totalWickets = players.reduce((total, player) => total + player.wickets, 0);
   return (
     <>
       <section className="hero">
         <div className="hero-copy">
-          <span className="hero-kicker"><span className="live-dot" /> THE YELLOW ARMY · STATS HUB</span>
-          <h1>Every run.<br />Every <em>moment.</em></h1>
-          <p>Your home for Slingers CC numbers, standout performances and the stories behind the scorecards.</p>
+          <span className="hero-kicker"><span className="live-dot" /> SLINGERS CC 2.0 <i /> ALL-TIME SCORECARD ARCHIVE</span>
+          <p className="hero-summary">Slingers CC 2.0, Tambaram, identifies and nurtures young cricket talent with the right training, guidance, and exposure.</p>
+          <h1>SLINGERS<span>CC <em>2.0</em></span></h1>
+          <p className="hero-description">Led by experienced players, we develop young cricketers through structured coaching, building skills, discipline, and confidence.</p>
           <button className="hero-cta" onClick={() => { setPage('leaderboards'); setBoard('batting'); }}>Explore leaderboards <Icon name="arrow" size={16} /></button>
         </div>
         <div className="hero-art" aria-hidden="true">
           <div className="art-ring ring-one" /><div className="art-ring ring-two" />
           <img className="hero-crest" src={clubLogo} alt="" />
           <span className="art-star star-a">✳</span><span className="art-star star-b">✳</span>
-          <span className="art-side-label">CHENNAI · CRICKET CLUB</span>
         </div>
-        <div className="hero-bottom"><span>SEASON ARCHIVE</span><span>{matchesPlayed} MATCHES PLAYED</span><span>ONE CLUB. ONE FAMILY.</span></div>
-      </section>
-
-      <section className="stats-grid">
-        <StatCard label="Matches played" value={String(matchesPlayed)} note={`${matches.length} scorecards available`} icon="calendar" />
-        <StatCard label="Squad players" value={String(players.length)} note="Across all games" icon="users" />
-        <StatCard label="Most runs" value={String(topRunScorer?.runs ?? 0)} note={topRunScorer?.name ?? '—'} icon="cricket" />
-        <StatCard label="Most wickets" value={String(topWicketTaker?.wickets ?? 0)} note={topWicketTaker?.name ?? '—'} icon="trophy" />
+        <div className="hero-stats">
+          <div><small>MATCHES</small><strong>{matches.length}</strong><span>Scorecards archived</span></div>
+          <div><small>PLAYERS</small><strong>{players.length}</strong><span>In the archive</span></div>
+          <div><small>RUNS SCORED</small><strong>{totalRuns.toLocaleString()}</strong><span>Across all innings</span></div>
+          <div><small>WICKETS TAKEN</small><strong>{totalWickets.toLocaleString()}</strong><span>Across all innings</span></div>
+        </div>
       </section>
 
       <section className="feature-grid">
